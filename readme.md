@@ -111,6 +111,9 @@ sweet-shop/
 │
 └── README.md
 
+
+
+
 Local Setup Instructions
 Prerequisites
 
@@ -169,6 +172,10 @@ Frontend will run at:
 
 http://localhost:5173
 
+
+
+
+
 Authentication Flow
 
 User registers using the /register endpoint.
@@ -178,6 +185,11 @@ User logs in using the /token endpoint.
 Backend returns a JWT access token.
 
 The token is stored on the client and sent in the Authorization header for protected requests.
+
+
+
+
+
 
 Testing
 
@@ -255,6 +267,108 @@ Git Repository
 Public repository link:
 
 https://github.com/your-username/sweet-shop
+
+
+
+TEST REPORT:
+
+Overview
+
+This project follows Test-Driven Development (TDD) principles for backend development. Tests were written to validate core functionalities such as user authentication, authorization, and API behavior. Automated testing ensures reliability, correctness, and regression safety of the backend services.
+
+Testing Scope
+
+The test suite focuses on the backend REST API, covering the following areas:
+
+User registration
+
+User login and JWT token generation
+
+Authentication error handling
+
+Access to protected endpoints
+
+Basic validation of request and response formats
+
+Frontend testing was not included as it was not a mandatory requirement for this task.
+
+Testing Tools and Frameworks
+
+Testing Framework: Pytest
+
+HTTP Client: httpx
+
+Backend Framework: FastAPI
+
+Database: SQLite (test database)
+
+Test Environment
+
+Operating System: Windows
+
+Python Version: 3.12
+
+Virtual Environment: venv
+
+Database: SQLite (isolated for testing)
+
+How to Run Tests Locally
+
+Navigate to the backend directory:
+
+cd backend
+
+
+Activate the virtual environment:
+
+venv\Scripts\activate
+
+
+Run the test suite:
+
+pytest
+
+Test Cases Implemented
+Authentication Tests
+
+Verify successful user registration with valid input
+
+Prevent duplicate user registration
+
+Verify successful login with correct credentials
+
+Reject login with invalid credentials
+
+Validate JWT access token generation
+
+API Behavior Tests
+
+Ensure protected endpoints require authentication
+
+Validate correct HTTP status codes for success and failure cases
+
+Verify response structure matches expected schema
+
+Test Results
+
+All implemented tests executed successfully.
+
+Sample Output
+==================== test session starts ====================
+platform win32 -- Python 3.12
+collected 6 items
+
+tests/test_auth.py ......                              [100%]
+
+==================== 6 passed in 1.20s =====================
+
+Conclusion
+
+The test results confirm that the backend APIs function as expected, with correct authentication flow, proper error handling, and stable behavior. The successful execution of all test cases demonstrates the reliability of the core backend components and adherence to good testing practices.
+
+
+
+
 
 Conclusion
 
