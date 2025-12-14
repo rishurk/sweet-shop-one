@@ -1,73 +1,47 @@
-from fastapi import APIRouter, Depends, HTTPException
-from fastapi.security import OAuth2PasswordRequestForm
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from sqlalchemy.exc import IntegrityError
+from .. import models, schemas, security, jwt_utils
+from ..dependencies import get_db
+from fastapi.security import OAuth2PasswordRequestForm
+from datetime import timedelta
 
-from app.database import SessionLocal
-from app.models import User
-from app.schemas import UserRegister
-from app.security import hash_password, verify_password
-from app.jwt_utils import create_access_token
+router = APIRouter(
+    prefix="/auth",
+    tags=["auth"],
+)
 
-router = APIRouter()
+@router.post("/register", response_model=schemas.User)
+def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
+    db_user = db.query(models.User).filter(models.User.email == user.email).first()
+    if db_user:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    
+    db_username = db.query(models.User).filter(models.User.username == user.username).first()
+    if db_username:
+        raise HTTPException(status_code=400, detail="Username already taken")
 
+    hashed_password = security.get_password_hash(user.password)
+    new_user = models.User(
+        email=user.email, 
+        username=user.username, 
+        hashed_password=hashed_password
+    )
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    return new_user
 
-# -------------------------
-# Database dependency
-# -------------------------
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
-
-# -------------------------
-# Register
-# -------------------------
-@router.post("/register")
-def register(user: UserRegister, db: Session = Depends(get_db)):
-    try:
-        new_user = User(
-            email=user.email,
-            hashed_password=hash_password(user.password),
-            role="USER"
+@router.post("/token", response_model=schemas.Token)
+def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+    user = db.query(models.User).filter(models.User.username == form_data.username).first()
+    if not user or not security.verify_password(form_data.password, user.hashed_password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Bearer"},
         )
-        db.add(new_user)
-        db.commit()
-        db.refresh(new_user)
-
-        return {
-            "id": new_user.id,
-            "email": new_user.email,
-            "role": new_user.role
-        }
-
-    except IntegrityError:
-        db.rollback()
-        raise HTTPException(status_code=400, detail="User already exists")
-
-
-# -------------------------
-# Login (OAuth2)
-# -------------------------
-@router.post("/token")
-def login_for_access_token(
-        form_data: OAuth2PasswordRequestForm = Depends(),
-        db: Session = Depends(get_db)
-):
-    user = db.query(User).filter(User.email == form_data.username).first()
-
-    if not user:
-        raise HTTPException(status_code=401, detail="Incorrect username or password")
-
-    if not verify_password(form_data.password, user.hashed_password):
-        raise HTTPException(status_code=401, detail="Incorrect username or password")
-
-    access_token = create_access_token({"user_id": user.id})
-
-    return {
-        "access_token": access_token,
-        "token_type": "bearer"
-    }
+    access_token_expires = timedelta(minutes=jwt_utils.ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = jwt_utils.create_access_token(
+        data={"sub": user.username}, expires_delta=access_token_expires
+    )
+    return {"access_token": access_token, "token_type": "bearer"}
