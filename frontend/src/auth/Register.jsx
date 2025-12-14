@@ -14,7 +14,8 @@ const Register = () => {
             await register(formData);
             navigate('/login');
         } catch (err) {
-            setError('Registration failed. Try again.');
+            const msg = err.response?.data?.detail || 'Registration failed. Try again.';
+            setError(msg);
         }
     };
 
