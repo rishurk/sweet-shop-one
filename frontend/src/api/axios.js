@@ -13,6 +13,10 @@ api.interceptors.request.use(
         return config;
     },
     (error) => {
+        if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+            localStorage.removeItem('token');
+            window.location.href = '/login';
+        }
         return Promise.reject(error);
     }
 );

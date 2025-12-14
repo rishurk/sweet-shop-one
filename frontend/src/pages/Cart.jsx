@@ -33,7 +33,8 @@ const Cart = () => {
             navigate('/orders');
         } catch (err) {
             console.error(err);
-            setError('Failed to place order. Please try again.');
+            const errorMessage = err.response?.data?.detail || 'Failed to place order. Please try again.';
+            setError(errorMessage);
         } finally {
             setLoading(false);
         }
